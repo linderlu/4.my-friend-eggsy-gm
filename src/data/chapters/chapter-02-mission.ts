@@ -151,7 +151,7 @@ SUNNY SIDE DOWN은 3705
   next: "mission-step-2",
 },
 
-    {
+  {
     id: "mission-step-3",
     sceneType: "quiz",
     image: "/missions/step3-ketchup-ver2.png",
@@ -159,7 +159,7 @@ SUNNY SIDE DOWN은 3705
     title: "STEP 3",
     body: "아참 그러고 보니 \n 오늘 누군가 오기로 했지! \n 그 사람이 누군지 알아야한다 \n \n 그래야 마중나갈 준비를 하지!\n 누군지 아냐?!",
     interactionType: "text-code",
-    digitCount: 6,
+    digitCount: 4,
     primaryButtonLabel: "정답 제출",
     showHint: true,
     showSkip: true,
