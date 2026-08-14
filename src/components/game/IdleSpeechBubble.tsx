@@ -31,9 +31,7 @@ export default function IdleSpeechBubble({ onDismiss }: IdleSpeechBubbleProps) {
       className="sunny-card absolute right-[-6%] top-0 z-[70] max-w-[160px] -translate-y-[110%] rounded-2xl bg-white px-4 py-3 text-center shadow-sunny"
     >
       <p className="font-heading text-sm leading-snug text-sunny-brown">
-        SSUP!
-        <br />
-        시작 버튼을 눌러봐랅!
+        시작 버튼을 눌러봐!
       </p>
       <div className="absolute -bottom-2 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-white" />
     </motion.div>

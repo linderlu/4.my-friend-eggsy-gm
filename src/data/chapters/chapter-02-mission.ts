@@ -13,40 +13,46 @@ export const chapterMissionScenes: GameScene[] = [
   sceneType: "quiz",
   image: "/missions/step1-sole.png",
   imageAlt: "에그시가 7살 때 그린 계란 모양의 태양 그림",
-  title: "에그시가 7살 때 그린 그림",
-  body: `그렇다면 책상에 앉아랅!
-종이랑 펜이 필요하면 쓰도록해 ㅋㅋㅋ
+  title: "첫 번째 관문",
+  body: `지난 주에 우즈베키스탄
+여자애 한명도 아주 까불었다가
 
-우리 써니사이드업을
-소개하도록하지
+내가 우리 수업에서
+노래부르라고 했다! 이자식들
 
-이건 내가 7살 때 그린 그림이닭!
-계란을 너무 좋아해서
-해도 계란처럼 그렸지
+그래도 오솔레미오를 
+아주 잘부르더만 
+역시 스탄애들이 노래 잘불러
 
-그래서 우리 회사 이름도
-써니사이드업이되었닭!
+({name}: 미친 레이시스트..! 여전해)
 
-({name}: 너무 귀여워요!)
+뭐!? 오솔레미오 뜻이 뭔지 몰라?
+오 나의 태양이라는 뜻이지!
+SOLE은 이탈리아어로 태양이야
+그리고 ..
+(TMI TMI 주저리 주저리)
 
-그렇지? 그럼 문제닭!
-태양은 영어로는 SUN!
-이탈리어로는 SOLE이다
+흠.. 그러고 보니
+지난 주 전시회 같다가 신기한 회사를 봤지
 
-그러니까 내 그림에서
-SUNNY SIDE UP = SOLE인데
+SUNNY SIDE UP이라는 회사인데
+대표가 어렸을때 해를 마치 
+계란처럼 그렸다고 해서
+회사이름이 써니사이드업이라더군
 
-그렇다면..
-SUNNY SIDE DOWN은 
-뭘까? ㅋㅋㅋ`,
+Sunny side Up = SOLE인거지 허허ㅋㅋ
+마케팅적으로도 참 기발한 발상이야
+
+그럼 여기서 문제다 이놈들
+Sunny side down은 뭘까?`,
   interactionType: "four-digit",
   primaryButtonLabel: "정답 제출하기",
   showHint: true,
   showSkip: true,
-  hint: "힌트주세요! 에그시! 라고 외쳐랅!",
+  hint: "나는 바보다, 세번 외쳐라!",
   correctAnswer: "3705",
   validator: "exact",
-  failureMessage: "땡! 아니닭!!",
+  failureMessage: "땡! 이것도 몰라! 쯧",
   next: "step1-success",
   skipTo: "mission-step-2",
 },
@@ -54,17 +60,16 @@ SUNNY SIDE DOWN은
   id: "step1-success",
   sceneType: "reward",
   image: EGGSY,
-  body: `정답이닭!! ㅋㅋㅋㅋ
+  body: `그래도 공부를 좀 했나보군
 
-SOLE을 거꾸로 뒤집으면
-3705가 된닭!
+그래 SOLE을 거꾸로 뒤집으면
+3705가 된거지!
 
 SUNNY SIDE UP은 SOLE,
 SUNNY SIDE DOWN은 3705
-몸풀기 문제였닭 ㅋㅋㅋ
-어렵지 않지?`,
+껄껄껄 재밌지?`,
   interactionType: "message",
-  primaryButtonLabel: "ㅋㅋㅋ 다음 문제 가자!",
+  primaryButtonLabel: "하.하. 재밌네요 교수님",
   next: "mission-step-2",
 },
 {
@@ -73,32 +78,31 @@ SUNNY SIDE DOWN은 3705
   image: "/missions/step2-heggllo.png",
   imageAlt: "헬로 문제 사진",
   title: "STEP 2",
-  body: "첫번째 문제를 잘 완수했군? ㅋㅋㅋ \n\n 두번째는\n 써니사이드업의\n인사법이닭!\n\n 인간들은 \n 충성! 필승! 같이 \n 인사한다고 하더군? \n\n하지만 우리는 이렇게 인사한닭\n0000000!\n (알파벳 7글자)\n\n힌트는 위에 암호를\n풀면 알수있닭!",
+  body: "오 자네도 이런 개그 좋아하나?\n좀 마음에 드는군? \n\n 그럼 좀더 얘기를 해주지\n 여기는 자기들만의\n 인사법도 있더라고\n\n내가 많은 나라를 다녀봤지만\n이런건 또 처음이었지 \n\n 맞춰봐라!",
   interactionType: "text-code",
   digitCount: 7,
   primaryButtonLabel: "정답 제출",
   showHint: true,
   showSkip: true,
-  hint: "도와줘요! 에그시!라고 크게 소리쳐랅!",
+  hint: "사랑해요 최낙환!이라고 외쳐라!",
   correctAnswer: "HEGGLLO",
   validator: "exact",
-  failureMessage: "다시 생각해봐랅! ㅋㅋㅋ",
+  failureMessage: "다시 생각해라, 이놈! ㅋㅋㅋ",
   next: "step2-success",
-  skipTo: "mission-step-3",
+  skipTo: "mission-step-2-ar-skip",
 },
 {
   id: "step2-success",
   sceneType: "reward",
   image: "/missions/step2-heggllo-egg.png",
   imageAlt: "헬로 정답 사진",
-  body: `정답이닭!!
-ㅋㅋㅋㅋㅋㅋ
-생각보다 기본기가
-되어있는 친구닭!
+  body: `그래 거기서는
+에글로! 하고 인사한다고
 
-우리는
-에글로!
-하고 인사한닭!
+소비자들에게 인식을
+강하게 남겨서 
+고려상품군으로 자리잡게 하려는
+마케팅 방법이지
 `,
   interactionType: "message",
   primaryButtonLabel: "H는 묵음! 명심하겠습니다!",
@@ -109,14 +113,20 @@ SUNNY SIDE DOWN은 3705
   sceneType: "reward",
   title: "MISSION",
   body: `근데 방금 "에글로!" 하던
-계란 아저씨 기억나냙?
+계란 아저씨 기억나나?
 
-평범한 아저씨 같지만
-528명의 부대원 중
-37번에 위치한
-높은 계급의 간부닭!
+그 회사는 특이하게
+528개의 계란 그림을
+가지고 있어서
+고객들이 그걸 모으게 만들더군
 
-문은 열고 에글로 대령을 찾아가랅!
+제품 뿐만 아니라 세계관을
+만들어서 지속적인 방문과
+구매를 만드는 마케팅 방식이지
+
+그 에글로 아저씨를 찾아가면
+자네들의 기억속에 남아있는
+마케팅 지식을 더 알려준다고 하네!
 (기억 안나면 왼쪽 위에
 뒤로가기 눌러서 보고와랅 ㅋㅋㅋ)`,
   interactionType: "message",
@@ -131,14 +141,14 @@ SUNNY SIDE DOWN은 3705
   image: EGGSY,
   body: `ㅋㅋㅋㅋ
 
-이번엔 특별히
-봐주겠닭!
+자네 미쳤나?
+스킵!!!??
 
-다음에는 꼭
-같이 찾아보잙!`,
+그런 정신으로
+어떻게 세상을 살려고! `,
   interactionType: "message",
-  primaryButtonLabel: "다음으로 이동 →",
-  next: "mission-step-3",
+  primaryButtonLabel: "다..다시할게요",
+  next: "mission-step-2",
 },
 
     {
@@ -147,46 +157,46 @@ SUNNY SIDE DOWN은 3705
     image: "/missions/step3-ketchup-ver2.png",
     imageAlt: "헬로 정답 사진",
     title: "STEP 3",
-    body: "아참 그러고 보니 \n 오늘 누군가를 만나기로 했닭!! \n 그 사람이 누군지 알아야한닭 \n \n 그래야 마중나갈 준비를 하지!\n 누군지 아냙?!",
+    body: "아참 그러고 보니 \n 오늘 누군가 오기로 했지! \n 그 사람이 누군지 알아야한다 \n \n 그래야 마중나갈 준비를 하지!\n 누군지 아냐?!",
     interactionType: "text-code",
     digitCount: 5,
     primaryButtonLabel: "정답 제출",
     showHint: true,
     showSkip: true,
-    hint: "영어이름이었던거 같은데..",
-    correctAnswer: "NHUNG",
+    hint: "분명 12년전에 봤는데..",
+    correctAnswer: "JINSUK",
     validator: "exact",
     failureMessage: "모른다고..?",
-    next: "coming-soon",
-    skipTo: "coming-soon",
+    next: "mission-step-4",
+    skipTo: "mission-step-2-ar-skip",
   },
 
     {
     id: "mission-step-4",
     sceneType: "dialogue",
-    image: EGGSY,
+    image: "/missions/jinsuk.png",
     title: "STEP 4",
-    body: "써니사이드업에 온걸 \n 환영해 NHUNG! \n Chào mừng NHUNG\n đến với Sunny Side Up!\n\nThật hạnh phúc khi\nchúng ta trở thành bạn bè! 💛",
+    body: "오빠 나야! 진숙이! \n 기억나지?!\n 키키키키키 \n 나도 이제 곧 성인이야!",
     interactionType: "message",
-    primaryButtonLabel: "고맙습니닭!\n(앗 내말투가 왜이러지)",
+    primaryButtonLabel: "헉 오랜만이야! 진숙아",
     next: "coming-soon",
   },
 
  {
     id: "mission-step-5",
     sceneType: "quiz",
-    image: "/missions/rose.png",
+    image: "/missions/jinsuk.png",
     imageAlt: "헬로 정답 사진",
-    title: "STEP 3",
-    body: "우린 해외출장에서 만나는 인연들이 \n매일 배달음식에\n매일 저녁 같은 음식을 먹지\n\n 우린 홍콩에 갈때마다\n로즈라는 식당에 가고\n이제 사장님이랑\n절친이 되었닭ㅋㅋㅋㅋ\n꿈에 로즈식당이 나올 지경이지\n\n아 그럼 여기서\n문제 하나 낼까?\n\n<문제닭!>\n내가 꿈을 꿨는데\n미국에 와있었닭\n거울에 비친 나는\n손에 장미를 가득 들고 있었닭!\n물론 장미는 좀 작았지\n하지만 너무나도 아름다웠닭!\n\n과연 장미는 몇송이나 됐을까?\n\n 한번 맞춰봐랅ㅋㅋㅋ\n너의 센스를 보겠닭! \n2%정도 억지가있닭(?)\nbut it makes sense!",
+    title: "내가 실수한 이유..",
+    body: "그때 실수했던건... 나도 미안해\n전날 저녁에 이상한 꿈을 꿨거든..\n\n내가 꿈을 꿨는데\n미국에 와있었어\n거울에 비친 나는\n손에 장미를 가득 들고 있었고..!\n물론 장미는 좀 작았지\n하지만 너무나도 아름다웠어!\n\n아..참! 근데 꿈에서 들고있던\n 장미는 몇송이나 됐을까?\n\n 한번 맞춰봐!ㅋㅋㅋ\n 2%정도 억지가있지만(?)\nbut it makes sense!",
     interactionType: "four-digit",
   primaryButtonLabel: "정답 제출하기",
   showHint: true,
   showSkip: true,
-  hint: "힌트주세요! 에그시! 라고 외쳐랅!",
+  hint: "문제를 한줄한줄 잘 읽어봐!",
   correctAnswer: "9207",
   validator: "exact",
-  failureMessage: "땡! 아니닭!!",
+  failureMessage: "땡! 틀렸어!",
   next: "coming-soon",
   skipTo: "coming-soon",
   },

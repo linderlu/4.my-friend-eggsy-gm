@@ -123,7 +123,7 @@ export default function OpeningTitleScreen({ onStart }: OpeningTitleScreenProps)
             opacity: 0.72,
           }}
         >
-          SUNNY SIDE UP
+          GROUP MANGER 27th
         </p>
 
         {/* left/width/transform (not right:12 alone) — right:12 would
