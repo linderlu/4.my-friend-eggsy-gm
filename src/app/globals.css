@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-sunny-white text-sunny-brown font-body;
+  }
+}
+
+@layer components {
+  /* Reusable "sunny" building blocks — no feature logic yet, just brand tokens */
+  .sunny-card {
+    @apply rounded-blob bg-white/80 shadow-sunny p-6;
+  }
+
+  .sunny-badge {
+    @apply inline-flex items-center rounded-full bg-sunny-yolkLight px-3 py-1 text-sm font-heading text-sunny-brown;
+  }
+}

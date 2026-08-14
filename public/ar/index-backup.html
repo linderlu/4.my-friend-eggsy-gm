@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>에그시 AR 테스트</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      }
+
+      a-scene {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        z-index: 1;
+      }
+
+      /* MindAR injects a raw <video> element for the camera feed; force it
+         to fill the screen and sit above the black body background. */
+      video {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+        opacity: 1 !important;
+        z-index: 0;
+      }
+
+      a-scene canvas.a-canvas {
+        background: transparent !important;
+        z-index: 1 !important;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .guide-text {
+        margin-top: calc(env(safe-area-inset-top, 0px) + 20px);
+        padding: 10px 18px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 999px;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .found-message {
+        margin-top: 14px;
+        padding: 8px 20px;
+        background: rgba(255, 214, 0, 0.92);
+        color: #422b00;
+        font-size: 15px;
+        font-weight: 800;
+        border-radius: 999px;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+
+      .found-message.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .ar-error {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        text-align: center;
+        color: #fff;
+        background: rgba(120, 0, 0, 0.88);
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.5;
+      }
+
+      .ar-error.visible {
+        display: flex;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="overlay">
+      <div class="guide-text">에그시의 얼굴을 비춰보세요!</div>
+      <div id="found-message" class="found-message">에그시를 찾았닭!</div>
+    </div>
+
+    <div id="ar-error" class="ar-error"></div>
+
+    <a-scene
+      mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiScanning: no; uiLoading: no;"
+      color-space="sRGB"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-assets>
+        <img id="eggsyPop" src="/ar/eggsy-pop.png" crossorigin="anonymous" />
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false"></a-camera>
+
+      <a-entity id="target" mindar-image-target="targetIndex: 0">
+        <a-image
+          id="eggsy-image"
+          src="#eggsyPop"
+          position="0 0 0"
+          width="1"
+          height="1.727"
+          scale="0.0001 0.0001 0.0001"
+        ></a-image>
+      </a-entity>
+    </a-scene>
+
+    <script>
+      var sceneEl = document.querySelector("a-scene");
+      var targetEl = document.querySelector("#target");
+      var imageEl = document.querySelector("#eggsy-image");
+      var foundMessageEl = document.querySelector("#found-message");
+      var errorEl = document.querySelector("#ar-error");
+
+      sceneEl.addEventListener("arReady", function (event) {
+        console.log("[MindAR] arReady", event.detail || event);
+      });
+
+      sceneEl.addEventListener("arError", function (event) {
+        console.error("[MindAR] arError", event.detail || event);
+        errorEl.textContent =
+          "카메라를 시작할 수 없습니다. 브라우저의 카메라 권한 설정을 확인해주세요.";
+        errorEl.classList.add("visible");
+      });
+
+      var HIDDEN_SCALE = "0.0001 0.0001 0.0001";
+      var VISIBLE_SCALE = "1 1 1";
+      var START_Y = -0.9;
+
+      targetEl.addEventListener("targetFound", function () {
+        foundMessageEl.classList.add("visible");
+
+        imageEl.removeAttribute("animation__pop-scale");
+        imageEl.removeAttribute("animation__pop-position");
+
+        imageEl.setAttribute("scale", HIDDEN_SCALE);
+        imageEl.setAttribute("position", "0 " + START_Y + " 0");
+
+        imageEl.setAttribute(
+          "animation__pop-scale",
+          "property: scale; from: " + HIDDEN_SCALE + "; to: " + VISIBLE_SCALE + "; dur: 650; easing: easeOutElastic"
+        );
+        imageEl.setAttribute(
+          "animation__pop-position",
+          "property: position; from: 0 " + START_Y + " 0; to: 0 0 0; dur: 650; easing: easeOutElastic"
+        );
+      });
+
+      targetEl.addEventListener("targetLost", function () {
+        foundMessageEl.classList.remove("visible");
+      });
+    </script>
+  </body>
+</html>

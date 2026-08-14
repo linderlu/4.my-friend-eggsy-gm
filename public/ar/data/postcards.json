@@ -1,0 +1,72 @@
+[
+  {
+    "id": 1,
+    "targetIndex": 0,
+    "characterFile": "/ar/characters/postcard_1.png",
+    "voiceFile": "/ar/voices/postcard_1.mp3",
+    "subtitle": "TODO: postcard_1 자막을 입력해주세요."
+  },
+  {
+    "id": 2,
+    "targetIndex": 1,
+    "characterFile": "/ar/characters/postcard_2.png",
+    "voiceFile": "/ar/voices/postcard_2.mp3",
+    "subtitle": "TODO: postcard_2 자막을 입력해주세요."
+  },
+  {
+    "id": 3,
+    "targetIndex": 2,
+    "characterFile": "/ar/characters/postcard_3.png",
+    "voiceFile": "/ar/voices/postcard_3.mp3",
+    "subtitle": "TODO: postcard_3 자막을 입력해주세요."
+  },
+  {
+    "id": 4,
+    "targetIndex": 3,
+    "characterFile": "/ar/characters/postcard_4.png",
+    "voiceFile": "/ar/voices/postcard_4.mp3",
+    "subtitle": "TODO: postcard_4 자막을 입력해주세요."
+  },
+  {
+    "id": 5,
+    "targetIndex": 4,
+    "characterFile": "/ar/characters/postcard_5.png",
+    "voiceFile": "/ar/voices/postcard_5.mp3",
+    "subtitle": "TODO: postcard_5 자막을 입력해주세요."
+  },
+  {
+    "id": 6,
+    "targetIndex": 5,
+    "characterFile": "/ar/characters/postcard_6.png",
+    "voiceFile": "/ar/voices/postcard_6.mp3",
+    "subtitle": "TODO: postcard_6 자막을 입력해주세요."
+  },
+  {
+    "id": 7,
+    "targetIndex": 6,
+    "characterFile": "/ar/characters/postcard_7.png",
+    "voiceFile": "/ar/voices/postcard_7.mp3",
+    "subtitle": "TODO: postcard_7 자막을 입력해주세요."
+  },
+  {
+    "id": 8,
+    "targetIndex": 7,
+    "characterFile": "/ar/characters/postcard_8.png",
+    "voiceFile": "/ar/voices/postcard_8.mp3",
+    "subtitle": "TODO: postcard_8 자막을 입력해주세요."
+  },
+  {
+    "id": 9,
+    "targetIndex": 8,
+    "characterFile": "/ar/characters/postcard_9.png",
+    "voiceFile": "/ar/voices/postcard_9.mp3",
+    "subtitle": "TODO: postcard_9 자막을 입력해주세요."
+  },
+  {
+    "id": 10,
+    "targetIndex": 9,
+    "characterFile": "/ar/characters/postcard_10.png",
+    "voiceFile": "/ar/voices/postcard_10.mp3",
+    "subtitle": "TODO: postcard_10 자막을 입력해주세요."
+  }
+]

@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>에글로 아저씨 찾기 - AR 미션</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: "Gowun Dodum", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      /* Same camera-visibility fix as /ar/index.html: MindAR sets the
+         video's inline z-index to -2, which buries it behind the page. */
+      video {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: cover !important;
+        z-index: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      a-scene canvas.a-canvas {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1 !important;
+        background: transparent !important;
+      }
+
+      .status-pill {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 20px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        padding: 10px 20px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-family: "Jua", sans-serif;
+        font-size: 15px;
+        border-radius: 999px;
+        text-align: center;
+        white-space: nowrap;
+        pointer-events: none;
+        transition: background-color 0.2s ease, color 0.2s ease;
+      }
+
+      .status-pill.clear {
+        background: rgba(255, 201, 60, 0.95);
+        color: #6b4a2e;
+      }
+
+      /* Non-interactive guidance UI - must never intercept clicks/taps
+         meant for the character underneath it. */
+      .touch-guide {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        max-width: 86vw;
+        padding: 12px 22px;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 20px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+        text-align: center;
+      }
+
+      .touch-guide.visible {
+        opacity: 1;
+      }
+
+      .touch-guide-text {
+        display: block;
+        color: #fff;
+        font-weight: 700;
+        font-family: "Jua", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        white-space: normal;
+        text-align: center;
+      }
+
+      .dialogue-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 28px);
+        pointer-events: none;
+      }
+
+      .dialogue-overlay.visible {
+        display: flex;
+      }
+
+      .dialogue-card {
+        width: 100%;
+        max-width: 400px;
+        border-radius: 2rem;
+        background: rgba(255, 255, 255, 0.97);
+        padding: 26px 22px 22px;
+        box-shadow: 0 12px 32px -16px rgba(107, 74, 46, 0.4);
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+
+      .dialogue-overlay.visible .dialogue-card {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .dialogue-body {
+        margin: 0;
+        white-space: pre-line;
+        text-align: center;
+        font-family: "Gowun Dodum", sans-serif;
+        font-size: 15px;
+        line-height: 1.7;
+        color: #6b4a2e;
+      }
+
+      .dialogue-button {
+        margin-top: 20px;
+        width: 100%;
+        border-radius: 999px;
+        border: 2px solid #ffaf00;
+        background: linear-gradient(to bottom, #ffe18a, #ffc93c);
+        color: #6b4a2e;
+        font-family: "Jua", sans-serif;
+        font-size: 18px;
+        padding: 14px 24px;
+        box-shadow: 0 8px 24px -8px rgba(255, 140, 66, 0.35);
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Always visible regardless of AR recognition state - camera
+         permission issues, bad lighting, or a target that never resolves
+         should never leave the player stuck in this overlay. */
+      .skip-button {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+        left: calc(env(safe-area-inset-left, 0px) + 16px);
+        z-index: 10;
+        border: none;
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-family: "Jua", sans-serif;
+        font-size: 14px;
+        -webkit-tap-highlight-color: transparent;
+        transition: opacity 0.2s ease;
+      }
+
+      /* While the success dialogue is open, the skip button visually steps
+         behind the dialogue card instead of overlapping it - still in the
+         DOM, still technically reachable, never display:none. */
+      .skip-button.behind-dialogue {
+        z-index: 5;
+        opacity: 0.4;
+      }
+
+      .skip-confirm-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 30;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: rgba(0, 0, 0, 0.55);
+      }
+
+      .skip-confirm-overlay.visible {
+        display: flex;
+      }
+
+      .skip-confirm-card {
+        width: 100%;
+        max-width: 360px;
+        border-radius: 2rem;
+        background: rgba(255, 255, 255, 0.98);
+        padding: 26px 22px 22px;
+        box-shadow: 0 12px 32px -16px rgba(107, 74, 46, 0.4);
+        text-align: center;
+      }
+
+      .skip-confirm-title {
+        margin: 0 0 10px;
+        font-family: "Jua", sans-serif;
+        font-size: 19px;
+        color: #6b4a2e;
+      }
+
+      .skip-confirm-body {
+        margin: 0 0 20px;
+        white-space: pre-line;
+        font-family: "Gowun Dodum", sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        color: #6b4a2e;
+      }
+
+      .skip-confirm-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .skip-confirm-btn {
+        border-radius: 999px;
+        padding: 13px 20px;
+        font-family: "Jua", sans-serif;
+        font-size: 16px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .skip-confirm-btn-primary {
+        border: 2px solid #ffaf00;
+        background: linear-gradient(to bottom, #ffe18a, #ffc93c);
+        color: #6b4a2e;
+        box-shadow: 0 8px 24px -8px rgba(255, 140, 66, 0.35);
+      }
+
+      .skip-confirm-btn-ghost {
+        border: 2px solid #ffc93c;
+        background: #fff;
+        color: #6b4a2e;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status-pill" class="status-pill">📷 에글로 아저씨를 찾는 중...</div>
+
+    <div id="touch-guide" class="touch-guide">
+      <span class="touch-guide-text">🔊 볼륨을 높이고<br />에그시를 터치해보세요</span>
+    </div>
+
+    <button id="skip-button" class="skip-button" type="button">⏭ 이번만 스킵</button>
+
+    <div id="skip-confirm-overlay" class="skip-confirm-overlay">
+      <div class="skip-confirm-card">
+        <p class="skip-confirm-title">정말 스킵할거닭?</p>
+        <p class="skip-confirm-body">AR 미션을 완료하면
+더 재미있는 이야기를
+볼 수 있닭!</p>
+        <div class="skip-confirm-buttons">
+          <button id="skip-cancel-button" class="skip-confirm-btn skip-confirm-btn-primary" type="button">계속 찾기</button>
+          <button id="skip-confirm-button" class="skip-confirm-btn skip-confirm-btn-ghost" type="button">이번만 스킵</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="dialogue-overlay" class="dialogue-overlay">
+      <div class="dialogue-card">
+        <p class="dialogue-body">ㅋㅋㅋㅋㅋㅋ
+나를 찾아냈닭!!
+
+사실..
+
+이거 쿠키런꺼
+증강현실하는거 보고
+
+린덜루가 대충 배낀거라
+아직 여기까지다 ㅋㅋㅋ
+
+다듬고 있으니 이해해줘랅</p>
+        <button id="dialogue-button" class="dialogue-button" type="button">🏃 다음문제 풀러가자!</button>
+      </div>
+    </div>
+
+    <audio id="pop-sound" src="/sounds/pop.mp3" preload="auto"></audio>
+    <audio id="clear-sound" src="/sounds/sparkle.mp3" preload="auto"></audio>
+
+    <a-scene
+      mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;"
+      loading-screen="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+      color-space="sRGB"
+    >
+      <a-camera
+        id="ar-camera"
+        position="0 0 0"
+        look-controls="enabled: false"
+        cursor="rayOrigin: mouse; fuse: false"
+        raycaster="objects: .clickable"
+      ></a-camera>
+
+      <!-- The single target entity for this mission's postcard is injected
+           here at runtime once postcards.json resolves - see below. -->
+    </a-scene>
+
+    <script>
+      // The one value that changes to point this same page at a different
+      // postcard mission later (postcard_8, postcard_15, ...) - passed in
+      // by ArMissionOverlay.tsx as a query param, falling back to 3.
+      var urlParams = new URLSearchParams(window.location.search);
+      var arMissionConfig = {
+        missionTargetId: Number(urlParams.get("missionTargetId")) || 3,
+      };
+
+      var sceneEl = document.querySelector("a-scene");
+      var statusPillEl = document.querySelector("#status-pill");
+      var touchGuideEl = document.querySelector("#touch-guide");
+      var dialogueOverlayEl = document.querySelector("#dialogue-overlay");
+      var dialogueButtonEl = document.querySelector("#dialogue-button");
+      var popSoundEl = document.querySelector("#pop-sound");
+      var clearSoundEl = document.querySelector("#clear-sound");
+      var skipButtonEl = document.querySelector("#skip-button");
+      var skipConfirmOverlayEl = document.querySelector("#skip-confirm-overlay");
+      var skipCancelButtonEl = document.querySelector("#skip-cancel-button");
+      var skipConfirmButtonEl = document.querySelector("#skip-confirm-button");
+
+      var STATUS_SEARCHING = "📷 에글로 아저씨를 찾는 중...";
+      var STATUS_CLEAR = "MISSION CLEAR! 에글로 아저씨 발견!";
+      var CLEAR_FLASH_MS = 1000;
+
+      var clearFlashTimer = null;
+
+      // The skip button stays visible for the player's entire time in this
+      // overlay - it's their way out if tapping the character never works
+      // for them, so it must never be hidden by mission state (found, clear
+      // flash, dialogue...). It only disappears because the whole overlay
+      // unmounts (on skip-confirm, on success, or on manual close). While
+      // the skip-confirm dialog is open, its own full-screen backdrop
+      // (z-index 30 vs. the button's 10) already physically blocks taps
+      // from reaching the button underneath - no extra JS state needed.
+      //
+      // AR tracking state and success-dialogue state are deliberately
+      // separate: missionFound reflects whether the target is *currently*
+      // tracked and toggles freely with targetFound/targetLost, while
+      // dialogueOpen reflects whether the success message box is on screen
+      // and must never be changed by a tracking event - see
+      // resetTrackingState() vs. closeDialogue()/openCharacterDialogue()
+      // further down.
+      var missionFound = false;
+      // Reset only when this page loads fresh (a new AR mission open always
+      // means a brand-new iframe, so these start false every time on their
+      // own - no explicit "reopen" reset step is needed).
+      var characterTapHandled = false;
+      var dialogueOpen = false;
+      var missionCompleted = false;
+      var activeCharacterEl = null;
+      var activeHitAreaEl = null;
+
+      // A-Frame's raycaster component caches which .clickable elements it
+      // considers on init and refreshes on scene mutations, but that can
+      // race with entities we create well after page load - force an
+      // explicit refresh right after adding the character/hit-area so a
+      // stale cached list is never the reason a tap doesn't register.
+      var cameraEl = document.querySelector("#ar-camera");
+      function refreshRaycasterObjects() {
+        if (cameraEl && cameraEl.components && cameraEl.components.raycaster) {
+          cameraEl.components.raycaster.refreshObjects();
+        }
+      }
+
+      // --- Camera bootstrap (same fix as /ar/index.html, kept identical) --
+      function forceVideoVisible() {
+        var video = document.querySelector("video");
+        if (!video) return;
+
+        video.style.setProperty("position", "fixed", "important");
+        video.style.setProperty("inset", "0", "important");
+        video.style.setProperty("width", "100vw", "important");
+        video.style.setProperty("height", "100vh", "important");
+        video.style.setProperty("object-fit", "cover", "important");
+        video.style.setProperty("z-index", "0", "important");
+        video.style.setProperty("display", "block", "important");
+        video.style.setProperty("visibility", "visible", "important");
+        video.style.setProperty("opacity", "1", "important");
+      }
+
+      var videoObserver = new MutationObserver(function () {
+        forceVideoVisible();
+      });
+
+      function observeVideo() {
+        var video = document.querySelector("video");
+        if (video) {
+          videoObserver.disconnect();
+          videoObserver.observe(video, { attributes: true, attributeFilter: ["style"] });
+          forceVideoVisible();
+        } else {
+          videoObserver.observe(document.body, { childList: true, subtree: true });
+        }
+      }
+
+      var bootstrapObserver = new MutationObserver(function () {
+        if (document.querySelector("video")) {
+          bootstrapObserver.disconnect();
+          observeVideo();
+        }
+      });
+      bootstrapObserver.observe(document.body, { childList: true, subtree: true });
+
+      sceneEl.addEventListener("arReady", function (event) {
+        console.log("[Mission] arReady", event.detail || event);
+        observeVideo();
+        forceVideoVisible();
+        setTimeout(forceVideoVisible, 100);
+        setTimeout(forceVideoVisible, 500);
+        setTimeout(forceVideoVisible, 1000);
+      });
+
+      sceneEl.addEventListener("arError", function (event) {
+        console.error("[Mission] arError", event.detail || event);
+      });
+
+      // --- Character pop-in animation (same pattern as /ar/index.html) ---
+      function showCharacter(characterEl) {
+        characterEl.removeAttribute("animation__pop");
+        characterEl.setAttribute("visible", true);
+        characterEl.setAttribute("scale", "0 0 0");
+
+        void characterEl.object3D.scale.x;
+
+        requestAnimationFrame(function () {
+          characterEl.setAttribute(
+            "animation__pop",
+            "property: scale; from: 0 0 0; to: 1 1 1; dur: 850; easing: easeOutElastic"
+          );
+        });
+      }
+
+      function hideCharacter(characterEl) {
+        characterEl.removeAttribute("animation__pop");
+        characterEl.setAttribute("scale", "0 0 0");
+        characterEl.setAttribute("visible", false);
+      }
+
+      // The invisible hit-area plane behind the character - shown/hidden in
+      // lockstep with it, no pop animation needed since it's never seen.
+      function showHitArea(hitAreaEl) {
+        if (!hitAreaEl) return;
+        hitAreaEl.setAttribute("visible", true);
+        hitAreaEl.setAttribute("scale", "1 1 1");
+      }
+
+      function hideHitArea(hitAreaEl) {
+        if (!hitAreaEl) return;
+        hitAreaEl.setAttribute("scale", "0 0 0");
+        hitAreaEl.setAttribute("visible", false);
+      }
+
+      function applyCharacterAspectRatio(characterEl, imageUrl) {
+        var probe = new Image();
+        probe.onload = function () {
+          var naturalWidth = probe.naturalWidth;
+          var naturalHeight = probe.naturalHeight;
+          if (!naturalWidth || !naturalHeight) return;
+
+          var baseSize = 0.9;
+          var ratio = naturalWidth / naturalHeight;
+          var width = ratio >= 1 ? baseSize : baseSize * ratio;
+          var height = ratio >= 1 ? baseSize / ratio : baseSize;
+
+          characterEl.setAttribute("width", width.toFixed(4));
+          characterEl.setAttribute("height", height.toFixed(4));
+        };
+        probe.onerror = function () {
+          console.warn("[Mission] failed to probe image size for aspect ratio:", imageUrl);
+        };
+        probe.src = imageUrl;
+      }
+
+      // --- AR tracking state (targetFound/targetLost only) ---------------
+      // Never touches the success dialogue - see closeDialogue() /
+      // openCharacterDialogue() below for the dialogue-only counterpart.
+      function resetTrackingState(characterEl, hitAreaEl) {
+        clearTimeout(clearFlashTimer);
+
+        statusPillEl.textContent = STATUS_SEARCHING;
+        statusPillEl.classList.remove("clear");
+        statusPillEl.style.display = "";
+
+        touchGuideEl.classList.remove("visible");
+
+        clearSoundEl.pause();
+        clearSoundEl.currentTime = 0;
+
+        if (characterEl) hideCharacter(characterEl);
+        hideHitArea(hitAreaEl);
+      }
+
+      function onTargetFound(characterEl, hitAreaEl) {
+        console.log("[Mission] Target found", arMissionConfig.missionTargetId);
+
+        missionFound = true;
+        showCharacter(characterEl);
+        showHitArea(hitAreaEl);
+
+        // Already succeeded (dialogue open, or on its way to close via the
+        // success button) - nothing more to announce, and definitely no
+        // repeat MISSION CLEAR flash/chime just because the player
+        // re-framed the postcard while reading.
+        if (dialogueOpen) {
+          touchGuideEl.classList.remove("visible");
+          return;
+        }
+
+        statusPillEl.textContent = STATUS_CLEAR;
+        statusPillEl.classList.add("clear");
+        statusPillEl.style.display = "";
+
+        clearSoundEl.currentTime = 0;
+        var clearPlayPromise = clearSoundEl.play();
+        if (clearPlayPromise && typeof clearPlayPromise.catch === "function") {
+          clearPlayPromise.catch(function (err) {
+            console.error("[Mission] clear sound play failed", err);
+          });
+        }
+
+        clearTimeout(clearFlashTimer);
+        clearFlashTimer = setTimeout(function () {
+          statusPillEl.style.display = "none";
+          if (!dialogueOpen) {
+            touchGuideEl.classList.add("visible");
+          }
+        }, CLEAR_FLASH_MS);
+      }
+
+      function onTargetLost(characterEl, hitAreaEl) {
+        missionFound = false;
+        resetTrackingState(characterEl, hitAreaEl);
+        // The success dialogue (if open) is intentionally left alone here -
+        // losing tracking (e.g. the player lowers their phone to read the
+        // message) must never close it. See resetTrackingState() above and
+        // closeDialogue() below for why these stay separate.
+      }
+
+      // --- Success dialogue state (independent of AR tracking) -----------
+      function hideDialogue() {
+        dialogueOverlayEl.classList.remove("visible");
+      }
+
+      function openCharacterDialogue() {
+        console.log("[Mission] Character dialogue opened");
+
+        popSoundEl.currentTime = 0;
+        var popPlayPromise = popSoundEl.play();
+        if (popPlayPromise && typeof popPlayPromise.catch === "function") {
+          popPlayPromise.catch(function (err) {
+            console.error("[Mission] pop sound play failed", err);
+          });
+        }
+
+        touchGuideEl.classList.remove("visible");
+        dialogueOverlayEl.classList.add("visible");
+        skipButtonEl.classList.add("behind-dialogue");
+      }
+
+      // advancing: true means the player left via the success button (the
+      // whole overlay is about to unmount anyway) - false means the
+      // dialogue went away some other way, so the character should become
+      // tappable again instead of staying permanently claimed.
+      function closeDialogue(options) {
+        var advancing = !!(options && options.advancing);
+
+        dialogueOpen = false;
+        hideDialogue();
+        skipButtonEl.classList.remove("behind-dialogue");
+
+        if (!advancing) {
+          characterTapHandled = false;
+        }
+      }
+
+      // The single entry point every tap-detection path funnels into -
+      // whichever one (A-Frame click, manual raycast, or the screen-area
+      // fallback) notices the tap first wins; characterTapHandled makes the
+      // other two no-ops even if they fire for the same physical tap.
+      function handleEggsyTap(source) {
+        if (characterTapHandled) return;
+        // Nothing to tap before the target is actually found - an empty
+        // patch of screen (or a not-yet-visible character) should never
+        // trigger success.
+        if (!missionFound) return;
+
+        characterTapHandled = true;
+        missionCompleted = true;
+        dialogueOpen = true;
+
+        console.log("[Mission] Eggsy tapped", {
+          source: source,
+          missionTargetId: arMissionConfig.missionTargetId,
+        });
+
+        openCharacterDialogue();
+      }
+
+      // Tier 1: A-Frame's own cursor/raycaster "click" event.
+      function handleAFrameClick() {
+        console.log("[Mission] A-Frame click");
+        handleEggsyTap("aframe-click");
+      }
+
+      // Tier 2: an independent THREE.Raycaster run straight off the
+      // pointerup screen coordinates against the actual character/hit-area
+      // meshes, using whatever camera A-Frame is currently rendering with
+      // (sceneEl.camera - this stays correct even if MindAR is driving a
+      // custom projection matrix that A-Frame's own cursor component
+      // might not always agree with).
+      var manualRaycaster = new THREE.Raycaster();
+      var pointerNDC = new THREE.Vector2();
+
+      function tryManualRaycast(clientX, clientY, canvasRect) {
+        if (!activeCharacterEl || !activeHitAreaEl) return false;
+
+        var threeCamera = sceneEl.camera;
+        if (!threeCamera) return false;
+
+        pointerNDC.x = ((clientX - canvasRect.left) / canvasRect.width) * 2 - 1;
+        pointerNDC.y = -((clientY - canvasRect.top) / canvasRect.height) * 2 + 1;
+
+        manualRaycaster.setFromCamera(pointerNDC, threeCamera);
+
+        var targets = [];
+        var characterMesh = activeCharacterEl.getObject3D("mesh");
+        var hitAreaMesh = activeHitAreaEl.getObject3D("mesh");
+        if (characterMesh) targets.push(characterMesh);
+        if (hitAreaMesh) targets.push(hitAreaMesh);
+        if (!targets.length) return false;
+
+        return manualRaycaster.intersectObjects(targets, true).length > 0;
+      }
+
+      // Tier 3: last resort - once the target has been found, treat a tap
+      // anywhere in a generous central region of the screen as a hit on
+      // the character (which is where a tracked target's content visually
+      // sits for a player who has the postcard framed in view).
+      var SCREEN_FALLBACK_WIDTH_RATIO = 0.6;
+      var SCREEN_FALLBACK_HEIGHT_RATIO = 0.6;
+
+      function isWithinScreenFallbackRegion(clientX, clientY, canvasRect) {
+        var marginX = (canvasRect.width * (1 - SCREEN_FALLBACK_WIDTH_RATIO)) / 2;
+        var marginY = (canvasRect.height * (1 - SCREEN_FALLBACK_HEIGHT_RATIO)) / 2;
+        return (
+          clientX >= canvasRect.left + marginX &&
+          clientX <= canvasRect.right - marginX &&
+          clientY >= canvasRect.top + marginY &&
+          clientY <= canvasRect.bottom - marginY
+        );
+      }
+
+      // A single listener covers both mouse and touch (pointer events unify
+      // them), registered on the document and filtered to the AR canvas so
+      // it never interferes with taps on the skip/dialogue/close buttons,
+      // which sit above the canvas as ordinary HTML elements.
+      document.addEventListener("pointerup", function (event) {
+        var canvas = sceneEl.canvas;
+        if (!canvas || event.target !== canvas) return;
+        if (characterTapHandled || !missionFound) return;
+
+        var canvasRect = canvas.getBoundingClientRect();
+
+        console.log("[Mission] Manual raycast");
+        if (tryManualRaycast(event.clientX, event.clientY, canvasRect)) {
+          handleEggsyTap("manual-raycast");
+          return;
+        }
+
+        if (isWithinScreenFallbackRegion(event.clientX, event.clientY, canvasRect)) {
+          console.log("[Mission] Screen fallback");
+          handleEggsyTap("screen-fallback");
+        }
+      });
+
+      dialogueButtonEl.addEventListener("click", function () {
+        closeDialogue({ advancing: true });
+        window.parent.postMessage(
+          { type: "ar-mission-complete", missionTargetId: arMissionConfig.missionTargetId },
+          window.location.origin
+        );
+      });
+
+      // Always available - the skip button is never hidden by mission
+      // state (see the comment by `missionFound` above).
+      skipButtonEl.addEventListener("click", function () {
+        console.log("[Mission] Skip clicked");
+        skipConfirmOverlayEl.classList.add("visible");
+      });
+
+      skipCancelButtonEl.addEventListener("click", function () {
+        skipConfirmOverlayEl.classList.remove("visible");
+      });
+
+      skipConfirmButtonEl.addEventListener("click", function () {
+        window.parent.postMessage(
+          { type: "ar-mission-skip", missionTargetId: arMissionConfig.missionTargetId },
+          window.location.origin
+        );
+      });
+
+      // --- Load this mission's one postcard from the shared data file ---
+      fetch("/ar/data/postcards.json")
+        .then(function (res) {
+          if (!res.ok) {
+            throw new Error("Failed to load postcards.json: " + res.status);
+          }
+          return res.json();
+        })
+        .then(function (postcards) {
+          var postcard = postcards.find(function (p) {
+            return p.id === arMissionConfig.missionTargetId;
+          });
+
+          if (!postcard) {
+            console.error("[Mission] no postcard found for missionTargetId", arMissionConfig.missionTargetId);
+            return;
+          }
+
+          var targetEntityEl = document.createElement("a-entity");
+          targetEntityEl.setAttribute("mindar-image-target", "targetIndex: " + postcard.targetIndex);
+
+          var characterEl = document.createElement("a-image");
+          characterEl.setAttribute("id", "character-" + postcard.id);
+          characterEl.setAttribute("src", postcard.characterFile);
+          characterEl.setAttribute("position", "0 0 0.05");
+          characterEl.setAttribute("width", "0.52");
+          characterEl.setAttribute("height", "0.9");
+          characterEl.setAttribute("visible", "false");
+          characterEl.setAttribute("scale", "0 0 0");
+          characterEl.setAttribute("transparent", "true");
+          // The actual visible a-image must itself carry .clickable -
+          // the raycaster's `objects: .clickable` selector only matches
+          // this element, not its parent target entity.
+          characterEl.classList.add("clickable");
+
+          // A generously-sized invisible plane behind the character, in
+          // case the PNG's opaque pixels don't cover enough of its bounds
+          // to be an easy tap target on a real device.
+          var hitAreaEl = document.createElement("a-plane");
+          hitAreaEl.setAttribute("id", "character-hit-area-" + postcard.id);
+          // opacity: 0 (fully zero) makes some raycast/culling paths treat
+          // the material as nothing at all - 0.001 keeps it functionally
+          // invisible while staying a "real" transparent material.
+          hitAreaEl.setAttribute("material", "opacity: 0.001; transparent: true");
+          hitAreaEl.setAttribute("position", "0 0 0.04");
+          hitAreaEl.setAttribute("width", "0.75");
+          hitAreaEl.setAttribute("height", "1.2");
+          hitAreaEl.setAttribute("visible", "false");
+          hitAreaEl.setAttribute("scale", "0 0 0");
+          hitAreaEl.classList.add("clickable", "character-hit-area");
+
+          targetEntityEl.appendChild(characterEl);
+          targetEntityEl.appendChild(hitAreaEl);
+          sceneEl.appendChild(targetEntityEl);
+          applyCharacterAspectRatio(characterEl, postcard.characterFile);
+          refreshRaycasterObjects();
+
+          activeCharacterEl = characterEl;
+          activeHitAreaEl = hitAreaEl;
+
+          console.log("[Mission] Character created", {
+            className: characterEl.className,
+            hitAreaClassName: hitAreaEl.className,
+            targetId: arMissionConfig.missionTargetId,
+          });
+
+          characterEl.addEventListener("click", handleAFrameClick);
+          hitAreaEl.addEventListener("click", handleAFrameClick);
+          targetEntityEl.addEventListener("targetFound", function () {
+            onTargetFound(characterEl, hitAreaEl);
+          });
+          targetEntityEl.addEventListener("targetLost", function () {
+            onTargetLost(characterEl, hitAreaEl);
+          });
+
+          console.log("[Mission] ready - postcard", postcard.id, "targetIndex", postcard.targetIndex);
+        })
+        .catch(function (err) {
+          console.error("[Mission] failed to load postcards.json", err);
+        });
+    </script>
+  </body>
+</html>

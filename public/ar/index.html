@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <title>에그시 AR 테스트 (디버그)</title>
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      }
+
+      /* MindAR sets the camera <video> to z-index: -2 inline, which buries it
+         behind the page. Force it above the body/canvas until proven visible. */
+      video {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        object-fit: cover !important;
+        z-index: 0 !important;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+
+      a-scene canvas.a-canvas {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 1 !important;
+        background: transparent !important;
+      }
+
+      .guide-text,
+      .found-message {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        padding: 10px 18px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        border-radius: 999px;
+        text-align: center;
+        white-space: nowrap;
+        pointer-events: none;
+      }
+
+      .guide-text {
+        top: calc(env(safe-area-inset-top, 0px) + 20px);
+      }
+
+      .found-message {
+        top: calc(env(safe-area-inset-top, 0px) + 70px);
+        background: rgba(255, 214, 0, 0.92);
+        color: #422b00;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+
+      .found-message.visible {
+        opacity: 1;
+      }
+
+      .touch-guide {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 12px 20px;
+        background: rgba(0, 0, 0, 0.55);
+        border-radius: 16px;
+        text-align: center;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+
+      .touch-guide.visible {
+        opacity: 1;
+      }
+
+      .touch-guide-text {
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+        white-space: nowrap;
+      }
+
+      .touch-icon {
+        font-size: 30px;
+        line-height: 1;
+        filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px rgba(77, 163, 255, 0.9))
+          drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        animation: touch-bounce 1s ease-in-out infinite;
+      }
+
+      @keyframes touch-bounce {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .subtitle {
+        position: fixed;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 40px);
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        max-width: 86vw;
+        padding: 14px 22px;
+        background: rgba(0, 0, 0, 0.68);
+        border-radius: 14px;
+        color: #fff;
+        font-weight: 700;
+        font-size: 15px;
+        line-height: 1.55;
+        text-align: center;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+      }
+
+      .subtitle.visible {
+        opacity: 1;
+      }
+
+      .postcard-number {
+        position: fixed;
+        top: calc(env(safe-area-inset-top, 0px) + 20px);
+        right: calc(env(safe-area-inset-right, 0px) + 16px);
+        z-index: 10;
+        padding: 4px 10px;
+        background: rgba(0, 0, 0, 0.55);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        border-radius: 999px;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.25s ease;
+      }
+
+      .postcard-number.visible {
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="guide-text">에그시의 얼굴을 비춰보세요!</div>
+    <div id="found-message" class="found-message">에그시를 찾았닭!</div>
+    <div id="postcard-number" class="postcard-number"></div>
+
+    <div id="touch-guide" class="touch-guide">
+      <div class="touch-guide-text">볼륨을 높이고 에그시를 터치해보세요</div>
+      <div class="touch-icon">👆</div>
+    </div>
+
+    <div id="subtitle" class="subtitle"></div>
+
+    <audio id="postcard-audio" preload="auto" playsinline></audio>
+
+    <a-scene
+      mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: no; uiScanning: no; uiError: no;"
+      loading-screen="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+      color-space="sRGB"
+    >
+      <a-camera
+        position="0 0 0"
+        look-controls="enabled: false"
+        cursor="rayOrigin: mouse"
+        raycaster="objects: .clickable"
+      ></a-camera>
+
+      <!-- mindar-image-target entities (one per postcards.json entry) are
+           injected here at runtime by the script below - see
+           createTargetEntity(). Nothing is hardcoded per postcard. -->
+    </a-scene>
+
+    <script>
+      var sceneEl = document.querySelector("a-scene");
+      var foundMessageEl = document.querySelector("#found-message");
+
+      function forceVideoVisible() {
+        var video = document.querySelector("video");
+        if (!video) return;
+
+        video.style.setProperty("position", "fixed", "important");
+        video.style.setProperty("inset", "0", "important");
+        video.style.setProperty("width", "100vw", "important");
+        video.style.setProperty("height", "100vh", "important");
+        video.style.setProperty("object-fit", "cover", "important");
+        video.style.setProperty("z-index", "0", "important");
+        video.style.setProperty("display", "block", "important");
+        video.style.setProperty("visibility", "visible", "important");
+        video.style.setProperty("opacity", "1", "important");
+      }
+
+      // MindAR resets the video's inline z-index after it (re)attaches the
+      // stream, so keep reapplying for a bit and watch for further changes.
+      var videoObserver = new MutationObserver(function () {
+        forceVideoVisible();
+      });
+
+      function observeVideo() {
+        var video = document.querySelector("video");
+        if (video) {
+          videoObserver.disconnect();
+          videoObserver.observe(video, { attributes: true, attributeFilter: ["style"] });
+          forceVideoVisible();
+        } else {
+          videoObserver.observe(document.body, { childList: true, subtree: true });
+        }
+      }
+
+      // Catch the video element the moment MindAR inserts it into the DOM.
+      var bootstrapObserver = new MutationObserver(function () {
+        if (document.querySelector("video")) {
+          bootstrapObserver.disconnect();
+          observeVideo();
+        }
+      });
+      bootstrapObserver.observe(document.body, { childList: true, subtree: true });
+
+      function logVideoState(label) {
+        var video =
+          (sceneEl.systems["mindar-image-system"] && sceneEl.systems["mindar-image-system"].video) ||
+          document.querySelector("video");
+
+        if (!video) {
+          console.warn("[MindAR debug]", label, "- video element not found yet");
+          return;
+        }
+
+        console.log("[MindAR debug]", label, "- video state", {
+          videoWidth: video.videoWidth,
+          videoHeight: video.videoHeight,
+          readyState: video.readyState,
+          paused: video.paused,
+        });
+
+        var rect = video.getBoundingClientRect();
+        var computed = window.getComputedStyle(video);
+
+        console.log("[MindAR debug]", label, "- video DOM position", {
+          parentElement: video.parentElement ? video.parentElement.tagName : null,
+          boundingClientRect: rect,
+        });
+
+        console.log("[MindAR debug]", label, "- video computedStyle", {
+          position: computed.position,
+          top: computed.top,
+          left: computed.left,
+          width: computed.width,
+          height: computed.height,
+          display: computed.display,
+          opacity: computed.opacity,
+          visibility: computed.visibility,
+          zIndex: computed.zIndex,
+          objectFit: computed.objectFit,
+          transform: computed.transform,
+        });
+      }
+
+      sceneEl.addEventListener("arReady", function (event) {
+        console.log("[MindAR] arReady", event.detail || event);
+        observeVideo();
+        forceVideoVisible();
+        setTimeout(forceVideoVisible, 100);
+        setTimeout(forceVideoVisible, 500);
+        setTimeout(function () {
+          forceVideoVisible();
+          logVideoState("arReady +1s");
+        }, 1000);
+        logVideoState("arReady");
+      });
+
+      sceneEl.addEventListener("arError", function (event) {
+        console.error("[MindAR] arError", event.detail || event);
+      });
+
+      // --- Data-driven postcard targets -----------------------------------
+      // Adding postcard_11 later means: drop the character PNG + voice mp3
+      // in place, add one entry to postcards.json. Nothing here changes.
+      var POSTCARDS_URL = "/ar/data/postcards.json";
+
+      var touchGuideEl = document.querySelector("#touch-guide");
+      var subtitleEl = document.querySelector("#subtitle");
+      var postcardNumberEl = document.querySelector("#postcard-number");
+      var postcardAudioEl = document.querySelector("#postcard-audio");
+      var subtitleHideTimer = null;
+
+      var postcardsByTargetIndex = {};
+      // Only one postcard is ever "active" at a time (req: single active
+      // state) - activeTargetIndex tracks which one. Each target keeps its
+      // own dedicated <a-image> (in characterElements) instead of a single
+      // element being reparented between targets, since a-frame's
+      // animation/material state doesn't reliably survive being moved
+      // between entities.
+      var activeTargetIndex = null;
+      var characterElements = new Map();
+
+      function padId(id) {
+        return String(id).length < 2 ? "0" + id : String(id);
+      }
+
+      function showTouchGuide() {
+        touchGuideEl.classList.add("visible");
+      }
+
+      function hideTouchGuide() {
+        touchGuideEl.classList.remove("visible");
+      }
+
+      function showSubtitle() {
+        clearTimeout(subtitleHideTimer);
+        subtitleEl.classList.add("visible");
+      }
+
+      function hideSubtitle() {
+        clearTimeout(subtitleHideTimer);
+        subtitleEl.classList.remove("visible");
+      }
+
+      function stopPostcardVoice() {
+        postcardAudioEl.pause();
+        postcardAudioEl.currentTime = 0;
+      }
+
+      function playPostcardVoice() {
+        // Ignore repeat taps while already playing (req 8); once "ended"
+        // fires, paused becomes true again so a later tap can replay (req 9).
+        if (!postcardAudioEl.paused) {
+          return;
+        }
+
+        postcardAudioEl.currentTime = 0;
+        var playPromise = postcardAudioEl.play();
+        if (playPromise && typeof playPromise.catch === "function") {
+          playPromise.catch(function (err) {
+            console.error("[Postcard] audio play failed", err);
+          });
+        }
+
+        hideTouchGuide();
+        showSubtitle();
+      }
+
+      postcardAudioEl.addEventListener("ended", function () {
+        subtitleHideTimer = setTimeout(hideSubtitle, 500);
+      });
+
+      // Each characterEl gets scale reset to 0 + visible=false while
+      // hidden, so three.js's raycaster (which skips invisible objects)
+      // naturally excludes it from hit-testing even though every
+      // characterEl carries class="clickable" (req 9).
+      function showCharacter(characterEl) {
+        characterEl.removeAttribute("animation__pop");
+        characterEl.setAttribute("visible", true);
+        characterEl.setAttribute("scale", "0 0 0");
+
+        // Force a synchronous read so the scale=0 reset above is committed
+        // before we queue the animation restart on the next frame -
+        // otherwise A-Frame's animation component can see the same target
+        // value as before and skip re-triggering it (req 5, req 6).
+        void characterEl.object3D.scale.x;
+
+        requestAnimationFrame(function () {
+          characterEl.setAttribute(
+            "animation__pop",
+            "property: scale; from: 0 0 0; to: 1 1 1; dur: 850; easing: easeOutElastic"
+          );
+        });
+      }
+
+      function hideCharacter(characterEl) {
+        characterEl.removeAttribute("animation__pop");
+        characterEl.setAttribute("scale", "0 0 0");
+        characterEl.setAttribute("visible", false);
+      }
+
+      // Loads the image once just to read its natural dimensions, then
+      // sizes the (already-created, already-visible-false) characterEl to
+      // match that aspect ratio so different postcards' art doesn't stretch.
+      function applyCharacterAspectRatio(characterEl, imageUrl) {
+        var probe = new Image();
+        probe.onload = function () {
+          var naturalWidth = probe.naturalWidth;
+          var naturalHeight = probe.naturalHeight;
+          if (!naturalWidth || !naturalHeight) return;
+
+          var baseSize = 0.9;
+          var ratio = naturalWidth / naturalHeight;
+          var width = ratio >= 1 ? baseSize : baseSize * ratio;
+          var height = ratio >= 1 ? baseSize / ratio : baseSize;
+
+          characterEl.setAttribute("width", width.toFixed(4));
+          characterEl.setAttribute("height", height.toFixed(4));
+        };
+        probe.onerror = function () {
+          console.warn("[Postcard] failed to probe image size for aspect ratio:", imageUrl);
+        };
+        probe.src = imageUrl;
+      }
+
+      function resetActivePostcard() {
+        stopPostcardVoice();
+        hideTouchGuide();
+        hideSubtitle();
+        postcardNumberEl.classList.remove("visible");
+        foundMessageEl.classList.remove("visible");
+
+        var previousCharacterEl = characterElements.get(activeTargetIndex);
+        if (previousCharacterEl) {
+          hideCharacter(previousCharacterEl);
+        }
+
+        activeTargetIndex = null;
+      }
+
+      function activatePostcard(targetIndex, characterEl) {
+        var postcard = postcardsByTargetIndex[targetIndex];
+        if (!postcard) {
+          console.warn("[Postcard] no data for targetIndex", targetIndex);
+          return;
+        }
+
+        // Switching targets mid-playback stops whatever the previous
+        // postcard was doing first (req 6, req 10).
+        if (activeTargetIndex !== null && activeTargetIndex !== targetIndex) {
+          resetActivePostcard();
+        }
+
+        activeTargetIndex = targetIndex;
+
+        // Re-confirm the src in case anything ever changed it (req 3).
+        characterEl.setAttribute("src", postcard.characterFile);
+
+        postcardAudioEl.pause();
+        postcardAudioEl.setAttribute("src", postcard.voiceFile);
+        postcardAudioEl.load();
+
+        subtitleEl.textContent = postcard.subtitle;
+        postcardNumberEl.textContent = "POSTCARD " + padId(postcard.id);
+
+        foundMessageEl.classList.add("visible");
+        postcardNumberEl.classList.add("visible");
+        showTouchGuide();
+
+        showCharacter(characterEl);
+      }
+
+      function createTargetEntity(postcard) {
+        var targetEntityEl = document.createElement("a-entity");
+        targetEntityEl.setAttribute("mindar-image-target", "targetIndex: " + postcard.targetIndex);
+        targetEntityEl.setAttribute("data-postcard-id", String(postcard.id));
+
+        var characterEl = document.createElement("a-image");
+        characterEl.setAttribute("id", "character-" + postcard.id);
+        characterEl.setAttribute("class", "clickable postcard-character");
+        characterEl.setAttribute("src", postcard.characterFile);
+        characterEl.setAttribute("position", "0 0 0.05");
+        characterEl.setAttribute("width", "0.52");
+        characterEl.setAttribute("height", "0.9");
+        characterEl.setAttribute("visible", "false");
+        characterEl.setAttribute("scale", "0 0 0");
+        characterEl.setAttribute("transparent", "true");
+
+        targetEntityEl.appendChild(characterEl);
+        characterElements.set(postcard.targetIndex, characterEl);
+        applyCharacterAspectRatio(characterEl, postcard.characterFile);
+
+        // A-Frame's cursor component (rayOrigin: mouse) binds both mouse
+        // and touch input on the canvas and emits a unified "click" event,
+        // so a single listener per characterEl covers desktop clicks and
+        // mobile taps alike (req 3, 4, 8, 12).
+        characterEl.addEventListener("click", function () {
+          playPostcardVoice();
+        });
+
+        targetEntityEl.addEventListener("targetFound", function () {
+          activatePostcard(postcard.targetIndex, characterEl);
+        });
+
+        targetEntityEl.addEventListener("targetLost", function () {
+          // Ignore stray targetLost from an anchor that isn't the active one.
+          if (activeTargetIndex !== postcard.targetIndex) {
+            return;
+          }
+          resetActivePostcard();
+        });
+
+        return targetEntityEl;
+      }
+
+      fetch(POSTCARDS_URL)
+        .then(function (res) {
+          if (!res.ok) {
+            throw new Error("Failed to load postcards.json: " + res.status);
+          }
+          return res.json();
+        })
+        .then(function (postcards) {
+          postcards.forEach(function (postcard) {
+            postcardsByTargetIndex[postcard.targetIndex] = postcard;
+            sceneEl.appendChild(createTargetEntity(postcard));
+          });
+          console.log("[Postcard] loaded", postcards.length, "postcards");
+        })
+        .catch(function (err) {
+          console.error("[Postcard] failed to load postcards.json", err);
+        });
+    </script>
+  </body>
+</html>
