@@ -21,8 +21,8 @@ const gowunDodum = Gowun_Dodum({
 // NEXT_PUBLIC_SITE_URL once the app has a real deployed domain.
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-const TITLE = "Sunny Side Up🐣";
-const DESCRIPTION = "이상한 내 친구 에그시와 함께하는 로컬여행";
+const TITLE = "GM27th 동해여행";
+const DESCRIPTION = "27기 남자들의 여름휴가 방탈출!";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
