@@ -19,7 +19,7 @@ const gowunDodum = Gowun_Dodum({
 
 // Used to resolve relative og:image / twitter:image URLs. Override with
 // NEXT_PUBLIC_SITE_URL once the app has a real deployed domain.
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = "https://4-my-friend-eggsy-gm.vercel.app";
 
 const TITLE = "GM27th 동해여행";
 const DESCRIPTION = "27기 남자들의 여름휴가 방탈출!";
