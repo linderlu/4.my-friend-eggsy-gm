@@ -174,18 +174,18 @@ SUNNY SIDE DOWN은 3705
     {
     id: "mission-step-4",
     sceneType: "dialogue",
-    image: "/missions/jinsuk.png",
+    image: "/missions/step4-jinsuk.png",
     title: "STEP 4",
     body: "오빠 나야! 진숙이! \n 기억나지?!\n 키키키키키 \n 나도 이제 곧 성인이야!",
     interactionType: "message",
     primaryButtonLabel: "헉 오랜만이야! 진숙아",
-    next: "coming-soon",
+    next: "mission-step-5",
   },
 
  {
     id: "mission-step-5",
     sceneType: "quiz",
-    image: "/missions/jinsuk.png",
+    image: "/missions/step4-jinsuk.png",
     imageAlt: "헬로 정답 사진",
     title: "내가 실수한 이유..",
     body: "그때 실수했던건... 나도 미안해\n전날 저녁에 이상한 꿈을 꿨거든..\n\n내가 꿈을 꿨는데\n미국에 와있었어\n거울에 비친 나는\n손에 장미를 가득 들고 있었고..!\n물론 장미는 좀 작았지\n하지만 너무나도 아름다웠어!\n\n아..참! 근데 꿈에서 들고있던\n 장미는 몇송이나 됐을까?\n\n 한번 맞춰봐!ㅋㅋㅋ\n 2%정도 억지가있지만(?)\nbut it makes sense!",

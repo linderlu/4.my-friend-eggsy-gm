@@ -26,7 +26,7 @@ export const chapterIntroScenes: GameScene[] = [
     id: "ceo-intro",
     sceneType: "dialogue",
     image: EGGSY,
-    body: "그래 {name}이! \n 말 지지리도 안듣던 놈! \n\n너 이자식 나 옛날에 \n 교수평가 몇점 줬어? \n\n {name} :아마 4점..요? \n\n 4점!?!? 야인마!! \n 내가 4점짜리 교수냐?",
+    body: "그래 {name}! \n 말 지지리도 안듣던 놈! \n\n너 이자식 나 옛날에 \n 교수평가 몇점 줬어? \n\n {name} :아마 4점..요? \n\n 4점!?!? 야인마!! \n 내가 4점짜리 교수냐?",
     interactionType: "message",
     primaryButtonLabel: "(5점은 아닌것 같은데..)",
     next: "gift-explain",
