@@ -24,6 +24,7 @@ export type SceneId =
   | "mission-step-3"
   | "mission-step-4"  
   | "mission-step-5"
+  | "mission-step-6"
   | "coming-soon";
 
 // What gets persisted to localStorage. Note: sceneId/history are written

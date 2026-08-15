@@ -197,8 +197,19 @@ SUNNY SIDE DOWN은 3705
   correctAnswer: "9207",
   validator: "exact",
   failureMessage: "땡! 틀렸어!",
-  next: "coming-soon",
-  skipTo: "coming-soon",
+  next: "mission-step-6",
+  skipTo: "mission-step-6",
+  },
+
+    {
+    id: "mission-step-6",
+    sceneType: "dialogue",
+    image: "/missions/step4-jinsuk.png",
+    title: "STEP 4",
+    body: "오랜만에 만나서 반가웠어!\n오빠들이 멋있게 성장한거 보니까\n정말 좋다 ㅎㅎㅎ\n\n아 참 아까 오빠 친구들이 \n 할말이 있다던데!",
+    interactionType: "message",
+    primaryButtonLabel: "아 그래? 뭐지?",
+    next: "coming-soon",
   },
 
 ];
